@@ -24,7 +24,9 @@ async def scrape_linkedin(keyword: str, location: str,date_filter: str):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=[
         "--no-sandbox",
-        "--disable-setuid-sandbox"
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-blink-features=AutomationControlled"
     ])
         page = await browser.new_page()
 

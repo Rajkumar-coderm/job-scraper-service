@@ -34,19 +34,15 @@ async def scrape_indeed(keyword: str, location: str,date_filter: str):
             headless=False,
              args=[
         "--no-sandbox",
-        "--disable-setuid-sandbox"
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-blink-features=AutomationControlled"
     ]
         )
 
         context = await browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/136.0.0.0 Safari/537.36"
-            ),
-            viewport={"width": 1280, "height": 720},
-            locale="en-US",
-        )
+    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+)
 
         page = await context.new_page()
 

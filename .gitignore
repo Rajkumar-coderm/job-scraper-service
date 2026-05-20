@@ -1,3 +1,5 @@
 venv/
 __pycache__/
 app/cache/
+indeed_debug.html
+naukri_debug.html
