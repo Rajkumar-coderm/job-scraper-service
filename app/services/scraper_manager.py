@@ -1,8 +1,8 @@
 import asyncio
 
 from app.scrapers.linkedin import scrape_linkedin
-from app.scrapers.indeed import scrape_indeed
-from app.scrapers.naukri import scrape_naukri
+# from app.scrapers.indeed import scrape_indeed
+# from app.scrapers.naukri import scrape_naukri
 
 from app.services.cache_service import (
     load_cache,
@@ -30,8 +30,8 @@ async def scrape_all_jobs(
 
     results = await asyncio.gather(
         scrape_linkedin(keyword, location, date_filter),
-        scrape_indeed(keyword, location, date_filter),
-        scrape_naukri(keyword, location, date_filter),
+        # scrape_indeed(keyword, location, date_filter),
+        # scrape_naukri(keyword, location, date_filter),
         return_exceptions=True
     )
 
