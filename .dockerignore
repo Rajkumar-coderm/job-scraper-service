@@ -1,6 +1,11 @@
 venv/
 __pycache__/
+*.pyc
+.env
+.git/
+.gitignore
+.DS_Store
 app/cache/
 indeed_debug.html
 naukri_debug.html
-.env
+*.md

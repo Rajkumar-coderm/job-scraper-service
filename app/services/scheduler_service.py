@@ -15,7 +15,10 @@ async def refresh_jobs():
             keyword="Flutter Developer",
             location="India",
             date_filter="24h",
-            force_refresh=True
+            force_refresh=True,
+            enrich_details=False,
+            headless=True,
+            use_cache=True,
         )
 
         print("Jobs Cache Updated")
@@ -29,7 +32,7 @@ def start_scheduler():
     scheduler.add_job(
         refresh_jobs,
         "interval",
-        minutes=30
+        minutes=30,
     )
 
     scheduler.start()

@@ -1,16 +1,20 @@
 services:
   - type: web
     name: job-scraper-service
-    runtime: python
-    plan: free
-
-    buildCommand: |
-      pip install -r requirements.txt
-      playwright install chromium
-      playwright install-deps
-
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-
+    runtime: docker
+  # Use Starter ($7/mo) or higher — Playwright needs more RAM than Free (512MB)
+    plan: starter
+    healthCheckPath: /api/v1/health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
+      - key: APP_NAME
+        value: Job Scraper API
+      - key: DEBUG
+        value: "false"
+      - key: HEADLESS
+        value: "true"
+      - key: SCRAPE_ON_STARTUP
+        value: "false"
+      - key: SCRAPE_SEQUENTIAL
+        value: "true"
+      - key: ENRICH_HR_LIMIT
+        value: "5"

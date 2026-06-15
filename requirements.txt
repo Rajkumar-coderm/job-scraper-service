@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-playwright
+playwright==1.49.1
 beautifulsoup4
 lxml
 httpx
