@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 playwright==1.49.1
+curl_cffi
 beautifulsoup4
 lxml
 httpx

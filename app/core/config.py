@@ -35,3 +35,6 @@ ENRICH_HR_LIMIT = int(os.getenv("ENRICH_HR_LIMIT", "5"))
 
 # Sequential scraping saves RAM on Render/small instances
 SCRAPE_SEQUENTIAL = _env_bool("SCRAPE_SEQUENTIAL", IS_CLOUD)
+
+# Optional residential proxy for Indeed on cloud (e.g. http://user:pass@host:port)
+PROXY_SERVER = os.getenv("PROXY_SERVER", "").strip()

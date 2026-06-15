@@ -1,4 +1,5 @@
 venv/
+vendor/
 __pycache__/
 app/cache/
 indeed_debug.html

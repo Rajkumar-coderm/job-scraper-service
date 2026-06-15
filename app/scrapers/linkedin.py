@@ -5,6 +5,13 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote
 
 from app.core.config import HEADLESS
+from app.utils.browser import (
+    dismiss_overlays,
+    launch_browser,
+    navigation_timeout,
+    new_stealth_context,
+    prepare_page,
+)
 from app.utils.helpers import clean_text
 from app.utils.job_enrichment import (
     default_hr_contact,
@@ -48,40 +55,19 @@ async def scrape_linkedin(
     browser_headless = HEADLESS if headless is None else headless
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=browser_headless,
-            args=[
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled",
-            ],
-        )
-
-        context = await browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/125.0.0.0 Safari/537.36"
-            )
-        )
-
-        page = await context.new_page()
-
-        await page.add_init_script("""
-        Object.defineProperty(navigator, 'webdriver', {
-            get: () => undefined
-        })
-        """)
+        browser = await launch_browser(p, browser_headless)
+        context = await new_stealth_context(browser)
+        page = await prepare_page(context)
 
         try:
             await page.goto(
                 url,
-                timeout=45000,
+                timeout=navigation_timeout(),
                 wait_until="domcontentloaded",
             )
 
-            await page.wait_for_timeout(3000)
+            await dismiss_overlays(page)
+            await page.wait_for_timeout(2500)
 
             for _ in range(3):
                 await page.mouse.wheel(0, 2500)
