@@ -38,3 +38,11 @@ SCRAPE_SEQUENTIAL = _env_bool("SCRAPE_SEQUENTIAL", IS_CLOUD)
 
 # Optional residential proxy for Indeed on cloud (e.g. http://user:pass@host:port)
 PROXY_SERVER = os.getenv("PROXY_SERVER", "").strip()
+
+# Per-source timeout; 0 = no limit. Default 120s on cloud (skip slow/blocked sources)
+SCRAPER_TIMEOUT_SECONDS = int(
+    os.getenv(
+        "SCRAPER_TIMEOUT_SECONDS",
+        "120" if IS_CLOUD else "0",
+    )
+)

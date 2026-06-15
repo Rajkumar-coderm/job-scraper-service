@@ -1,7 +1,12 @@
 import asyncio
 from typing import Optional
 
-from app.core.config import ENRICH_HR_LIMIT, HEADLESS, SCRAPE_SEQUENTIAL
+from app.core.config import (
+    ENRICH_HR_LIMIT,
+    HEADLESS,
+    SCRAPE_SEQUENTIAL,
+    SCRAPER_TIMEOUT_SECONDS,
+)
 from app.scrapers.linkedin import scrape_linkedin
 from app.scrapers.indeed import scrape_indeed
 from app.scrapers.naukri import scrape_naukri
@@ -36,6 +41,33 @@ def _dedupe_jobs(jobs: list) -> list:
     return unique_jobs
 
 
+async def _run_scraper(source: str, scraper_call) -> list:
+    try:
+        if SCRAPER_TIMEOUT_SECONDS > 0:
+            jobs = await asyncio.wait_for(
+                scraper_call,
+                timeout=SCRAPER_TIMEOUT_SECONDS,
+            )
+        else:
+            jobs = await scraper_call
+
+        if not isinstance(jobs, list):
+            return []
+
+        return jobs
+
+    except asyncio.TimeoutError:
+        print(
+            f"{source.title()} timed out after "
+            f"{SCRAPER_TIMEOUT_SECONDS}s — skipping"
+        )
+        return []
+
+    except Exception as error:
+        print(f"{source.title()} error:", error)
+        return []
+
+
 async def scrape_jobs_by_source(
     source: str,
     keyword: str,
@@ -50,13 +82,16 @@ async def scrape_jobs_by_source(
     if not scraper:
         raise ValueError(f"Unsupported source: {source}")
 
-    jobs = await scraper(
-        keyword,
-        location,
-        date_filter,
-        enrich_details=enrich_details,
-        enrich_hr_limit=enrich_hr_limit,
-        headless=headless,
+    jobs = await _run_scraper(
+        source.lower(),
+        scraper(
+            keyword,
+            location,
+            date_filter,
+            enrich_details=enrich_details,
+            enrich_hr_limit=enrich_hr_limit,
+            headless=headless,
+        ),
     )
 
     return _dedupe_jobs(jobs)
@@ -82,46 +117,57 @@ async def scrape_all_jobs(
 
     print("Fetching Fresh Jobs")
 
+    if SCRAPER_TIMEOUT_SECONDS > 0:
+        print(f"Per-source timeout: {SCRAPER_TIMEOUT_SECONDS}s")
+
     browser_headless = HEADLESS if headless is None else headless
 
-    scraper_calls = [
-        scrape_linkedin(
-            keyword,
-            location,
-            date_filter,
-            enrich_details=enrich_details,
-            enrich_hr_limit=enrich_hr_limit,
-            headless=browser_headless,
+    scraper_tasks = [
+        (
+            "linkedin",
+            scrape_linkedin(
+                keyword,
+                location,
+                date_filter,
+                enrich_details=enrich_details,
+                enrich_hr_limit=enrich_hr_limit,
+                headless=browser_headless,
+            ),
         ),
-        scrape_indeed(
-            keyword,
-            location,
-            date_filter,
-            enrich_details=enrich_details,
-            enrich_hr_limit=enrich_hr_limit,
-            headless=browser_headless,
+        (
+            "indeed",
+            scrape_indeed(
+                keyword,
+                location,
+                date_filter,
+                enrich_details=enrich_details,
+                enrich_hr_limit=enrich_hr_limit,
+                headless=browser_headless,
+            ),
         ),
-        scrape_naukri(
-            keyword,
-            location,
-            date_filter,
-            enrich_details=enrich_details,
-            enrich_hr_limit=enrich_hr_limit,
-            headless=browser_headless,
+        (
+            "naukri",
+            scrape_naukri(
+                keyword,
+                location,
+                date_filter,
+                enrich_details=enrich_details,
+                enrich_hr_limit=enrich_hr_limit,
+                headless=browser_headless,
+            ),
         ),
     ]
 
     if SCRAPE_SEQUENTIAL:
         results = []
-        for scraper_call in scraper_calls:
-            try:
-                results.append(await scraper_call)
-            except Exception as error:
-                results.append(error)
+        for source, scraper_call in scraper_tasks:
+            results.append(await _run_scraper(source, scraper_call))
     else:
         results = await asyncio.gather(
-            *scraper_calls,
-            return_exceptions=True,
+            *[
+                _run_scraper(source, scraper_call)
+                for source, scraper_call in scraper_tasks
+            ]
         )
 
     all_jobs = []
@@ -129,8 +175,6 @@ async def scrape_all_jobs(
     for result in results:
         if isinstance(result, list):
             all_jobs.extend(result)
-        elif isinstance(result, Exception):
-            print("Scraper Error:", result)
 
     unique_jobs = _dedupe_jobs(all_jobs)
 

@@ -18,3 +18,5 @@ services:
         value: "true"
       - key: ENRICH_HR_LIMIT
         value: "5"
+      - key: SCRAPER_TIMEOUT_SECONDS
+        value: "120"

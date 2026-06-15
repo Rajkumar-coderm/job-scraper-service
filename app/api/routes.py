@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 
-from app.core.config import ENRICH_HR_LIMIT, HEADLESS
+from app.core.config import ENRICH_HR_LIMIT, HEADLESS, SCRAPER_TIMEOUT_SECONDS
 from app.models.job import JobSearchResponse
 from app.services.scraper_manager import (
     SCRAPER_MAP,
@@ -64,6 +64,7 @@ async def health_check():
         "date_filters": sorted(VALID_DATE_FILTERS),
         "browser_headless": HEADLESS,
         "enrich_hr_limit_default": ENRICH_HR_LIMIT,
+        "scraper_timeout_seconds": SCRAPER_TIMEOUT_SECONDS,
         "hr_enrichment_sources": ["naukri"],
     }
 
