@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.routes import router
-from app.core.config import APP_NAME, HEADLESS, SCRAPE_ON_STARTUP
+from app.core.config import APP_NAME, HEADLESS, IS_CLOUD, SCRAPE_ON_STARTUP, SCRAPE_SEQUENTIAL
 from app.services.scheduler_service import (
     start_scheduler,
     refresh_jobs,
@@ -16,13 +16,15 @@ app = FastAPI(
 app.include_router(router)
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    return {
+    payload = {
         "message": "Job Scraper API is running",
         "docs": "/docs",
         "health": "/api/v1/health",
         "browser_headless": HEADLESS,
+        "cloud_mode": IS_CLOUD,
+        "scrape_sequential": SCRAPE_SEQUENTIAL,
         "endpoints": {
             "search_all": (
                 "/api/v1/jobs?keyword=flutter developer"
@@ -51,13 +53,16 @@ async def root():
             "use_cache": "optional - return cached results (default false)",
         },
     }
+    return payload
 
 
 @app.on_event("startup")
 async def startup_event():
 
     print("Starting App...")
+    print(f"Cloud mode: {IS_CLOUD}")
     print(f"Browser headless mode: {HEADLESS}")
+    print(f"Scrape sequential: {SCRAPE_SEQUENTIAL}")
 
     start_scheduler()
 

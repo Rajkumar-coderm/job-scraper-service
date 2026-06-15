@@ -4,22 +4,34 @@ import os
 load_dotenv()
 
 APP_NAME = os.getenv("APP_NAME", "Job Scraper API")
-DEBUG = os.getenv("DEBUG", "False") == "True"
 
-HEADLESS = os.getenv("HEADLESS", "false").lower() in ("true", "1", "yes")
 
-SCRAPE_ON_STARTUP = os.getenv("SCRAPE_ON_STARTUP", "false").lower() in (
-    "true",
-    "1",
-    "yes",
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.lower() in ("true", "1", "yes")
+
+
+# Render sets RENDER=true automatically; other PaaS flags included
+IS_CLOUD = bool(
+    os.getenv("RENDER")
+    or os.getenv("DYNO")
+    or os.getenv("RAILWAY_ENVIRONMENT_NAME")
+    or os.getenv("FLY_APP_NAME")
 )
 
-# Only Naukri detail pages reliably expose recruiter contact info
+DEBUG = _env_bool("DEBUG", False)
+
+# Cloud servers have no display — Playwright must run headless
+if IS_CLOUD:
+    HEADLESS = True
+else:
+    HEADLESS = _env_bool("HEADLESS", False)
+
+SCRAPE_ON_STARTUP = _env_bool("SCRAPE_ON_STARTUP", False)
+
 ENRICH_HR_LIMIT = int(os.getenv("ENRICH_HR_LIMIT", "5"))
 
-# Run scrapers sequentially on low-memory hosts (e.g. Render)
-SCRAPE_SEQUENTIAL = os.getenv("SCRAPE_SEQUENTIAL", "false").lower() in (
-    "true",
-    "1",
-    "yes",
-)
+# Sequential scraping saves RAM on Render/small instances
+SCRAPE_SEQUENTIAL = _env_bool("SCRAPE_SEQUENTIAL", IS_CLOUD)
